@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nature-deep: #1B4332;
+  --color-nature-forest: #40916C;
+  --color-nature-golden: #DDA15E;
+  --color-nature-cream: #F5F3EA;
+  --color-nature-dark: #1D2924;
+}
