@@ -35,6 +35,9 @@ class ActivityController extends Controller
             'base_price' => 'required|numeric|min:0',
             'cover_image' => 'nullable|url',
             'description' => 'required|string',
+            'distance_km' => 'nullable|numeric|min:0',
+            'altitude_meters' => 'nullable|integer|min:0',
+            'suitable_season' => 'nullable|string|max:150',
             'schedules' => 'nullable|array',
             'schedules.*.start_date' => 'nullable|date',
             'schedules.*.end_date' => 'nullable|date|after_or_equal:schedules.*.start_date',
@@ -43,7 +46,7 @@ class ActivityController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $request) {
-            // 1. บันทึกข้อมูลทริป
+            // 1. บันทึกข้อมูลทริปหลักพร้อมสเปกเส้นทาง
             $activity = Activity::create([
                 'name' => $validated['name'],
                 'category' => $validated['category'],
@@ -55,6 +58,9 @@ class ActivityController extends Controller
                 'base_price' => $validated['base_price'],
                 'cover_image' => $validated['cover_image'] ?? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=85',
                 'description' => $validated['description'],
+                'distance_km' => $validated['distance_km'] ?? null,
+                'altitude_meters' => $validated['altitude_meters'] ?? null,
+                'suitable_season' => $validated['suitable_season'] ?? 'ตลอดทั้งปี',
                 'is_active' => true,
             ]);
 
@@ -106,6 +112,9 @@ class ActivityController extends Controller
             'base_price' => 'required|numeric|min:0',
             'cover_image' => 'nullable|url',
             'description' => 'required|string',
+            'distance_km' => 'nullable|numeric|min:0',
+            'altitude_meters' => 'nullable|integer|min:0',
+            'suitable_season' => 'nullable|string|max:150',
             'is_active' => 'nullable',
             'schedules' => 'nullable|array',
             'schedules.*.id' => 'nullable|integer',
@@ -116,7 +125,7 @@ class ActivityController extends Controller
         ]);
 
         DB::transaction(function () use ($activity, $validated, $request) {
-            // 1. อัปเดตข้อมูลทริปหลัก
+            // 1. อัปเดตข้อมูลทริปหลักและสเปกเส้นทาง
             $activity->update([
                 'name' => $validated['name'],
                 'category' => $validated['category'],
@@ -127,6 +136,9 @@ class ActivityController extends Controller
                 'base_price' => $validated['base_price'],
                 'cover_image' => $validated['cover_image'] ?? $activity->cover_image,
                 'description' => $validated['description'],
+                'distance_km' => $validated['distance_km'] ?? null,
+                'altitude_meters' => $validated['altitude_meters'] ?? null,
+                'suitable_season' => $validated['suitable_season'] ?? 'ตลอดทั้งปี',
                 'is_active' => $request->has('is_active') ? true : false,
             ]);
 
@@ -170,7 +182,7 @@ class ActivityController extends Controller
                     }
                 }
 
-                // ลบรอบที่ผู้ใช้กดลบออกในฟอร์ม (ลบเฉพาะรอบที่ยังไม่มีลูกค้าจอง)
+                // ลบรอบที่นำออก (ยกเว้นรอบที่มีคนจองแล้ว)
                 $deleteQuery = $activity->schedules()->whereNotIn('id', $submittedIds);
                 if (Schema::hasTable('bookings')) {
                     $deleteQuery->whereDoesntHave('bookings');

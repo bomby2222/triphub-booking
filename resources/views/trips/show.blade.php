@@ -10,7 +10,7 @@
 
     <div class="absolute bottom-0 inset-x-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 text-white">
         <div class="flex flex-wrap items-center gap-2 mb-3">
-            @if($activity->badge !== 'NONE')
+            @if($activity->badge && $activity->badge !== 'NONE')
                 <span class="bg-red-500 text-white font-bold px-3 py-1 rounded-full text-xs shadow-md">🔥 {{ $activity->badge }}</span>
             @endif
             <span class="bg-nature-golden text-nature-deep font-bold px-3 py-1 rounded-full text-xs">{{ $activity->duration_text }}</span>
@@ -28,7 +28,7 @@
     </div>
 </section>
 
-<!-- Trip Specification Bar -->
+<!-- Trip Specification Bar (สเปกเส้นทางเดินป่า) -->
 <section class="bg-nature-dark text-white border-y border-white/10 py-5">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
         <div class="border-r border-white/10 last:border-none">
@@ -37,7 +37,7 @@
         </div>
         <div class="border-r border-white/10 last:border-none">
             <span class="text-xs text-nature-golden uppercase font-semibold block">ระยะทางเดินเท้า</span>
-            <span class="text-base font-bold">{{ $activity->distance_km ?? '-' }} กิโลเมตร</span>
+            <span class="text-base font-bold">{{ $activity->distance_km ? $activity->distance_km . ' กิโลเมตร' : '-' }}</span>
         </div>
         <div class="border-r border-white/10 last:border-none">
             <span class="text-xs text-nature-golden uppercase font-semibold block">ระดับความสูง</span>
@@ -58,12 +58,12 @@
             'start_date' => $s->start_date->format('Y-m-d'),
             'end_date' => $s->end_date->format('Y-m-d'),
             'start_day' => (int)$s->start_date->format('j'),
-            'start_month' => (int)$s->start_date->format('n') - 1, // 0-indexed for JavaScript
+            'start_month' => (int)$s->start_date->format('n') - 1, // 0-indexed สำหรับ JavaScript
             'start_year' => (int)$s->start_date->format('Y'),
             'formatted_range' => $s->start_date->format('d/m/Y') . ' - ' . $s->end_date->format('d/m/Y'),
             'available_seats' => (int)$s->available_seats,
             'total_seats' => (int)$s->total_seats,
-            'status' => $s->status, // 'open', 'full', 'closed'
+            'status' => $s->status,
             'price' => (float)($s->price_override ?? $activity->base_price),
         ];
     });
@@ -83,17 +83,48 @@
                 </p>
             </div>
 
-            <!-- Weather Preview Widget -->
-            <div class="glass-card rounded-2xl p-6 border border-nature-forest/20 shadow-md flex items-center justify-between">
-                <div>
-                    <span class="text-xs font-bold text-nature-forest uppercase tracking-wider block">🌤️ พยากรณ์อากาศยอดดอยสัปดาห์นี้</span>
-                    <span class="text-2xl font-extrabold text-nature-deep mt-1 block">22°C - 28°C</span>
-                    <span class="text-xs text-gray-600">โอกาสฝน 20% | ลมตะวันตกเฉียงใต้ 8 km/h</span>
-                </div>
-                <div class="text-right">
-                    <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
-                        เส้นทางเปิดปกติ
-                    </span>
+            <!-- Weather Preview Widget (Live Data จาก Open-Meteo API) -->
+            <div class="glass-card rounded-2xl p-6 border border-nature-forest/20 shadow-md"
+                 x-data="weatherWidget('{{ addslashes($activity->province) }}')">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-nature-forest uppercase tracking-wider block">
+                                🌤️ พยากรณ์อากาศสด (จ.{{ $activity->province }})
+                            </span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        </div>
+
+                        <template x-if="loading">
+                            <div class="mt-2 space-y-1">
+                                <div class="h-8 w-36 bg-gray-200 rounded-lg animate-pulse"></div>
+                                <div class="h-4 w-52 bg-gray-100 rounded animate-pulse"></div>
+                            </div>
+                        </template>
+
+                        <template x-if="!loading">
+                            <div>
+                                <div class="flex items-baseline gap-3 mt-1">
+                                    <span class="text-3xl font-black text-nature-deep" x-text="currentTemp + '°C'"></span>
+                                    <span class="text-sm font-semibold text-gray-500" x-text="'(สูงสุด ' + tempMax + '°C / ต่ำสุด ' + tempMin + '°C)'"></span>
+                                </div>
+                                <div class="text-xs text-gray-600 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span class="font-medium text-nature-dark" x-text="weatherText"></span>
+                                    <span>•</span>
+                                    <span>โอกาสเกิดฝน <strong class="text-blue-600" x-text="rainProb + '%'"></strong></span>
+                                    <span>•</span>
+                                    <span>ลม <strong x-text="windSpeed + ' km/h'"></strong></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="sm:text-right">
+                        <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-full shadow-sm"
+                              :class="badgeClass"
+                              x-text="badgeText">
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -133,7 +164,7 @@
                         @forelse($activity->includes as $inc)
                             <li>• {{ $inc->item_name }}</li>
                         @empty
-                            <li>• ไกด์นำทางและทีมงานดูแล</li>
+                            <li>• ไกด์นำทางและทีมงานดูแลความปลอดภัย</li>
                             <li>• ประกันอุบัติเหตุการเดินทาง</li>
                         @endforelse
                     </ul>
@@ -208,8 +239,8 @@
                         <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
                     </div>
 
-                    <!-- Calendar Grid -->
-                    <div class="grid grid-cols-7 gap-1 text-center">
+                    <!-- Calendar Grid (เชื่อมแถบวันต่อเนื่อง) -->
+                    <div class="grid grid-cols-7 gap-y-1 text-center">
                         <template x-for="blank in firstDayOfWeek" :key="'blank-'+blank">
                             <div class="h-11"></div>
                         </template>
@@ -219,23 +250,35 @@
                                 <button type="button"
                                         @click="selectDate(day)"
                                         :disabled="!isDateSelectable(day)"
-                                        class="w-full h-full rounded-2xl flex flex-col items-center justify-center text-xs font-semibold transition"
+                                        class="w-full h-full flex flex-col items-center justify-center text-xs font-semibold transition relative"
                                         :class="{
-                                            'bg-nature-deep text-white shadow-md ring-2 ring-nature-golden': isSelected(day),
-                                            'bg-emerald-50 text-nature-deep hover:bg-emerald-100 font-bold border border-emerald-300': isDateAvailable(day) && !isSelected(day),
-                                            'bg-amber-50 text-amber-800 opacity-60 cursor-not-allowed border border-amber-200': isDateFull(day),
-                                            'bg-red-50 text-red-500 opacity-40 cursor-not-allowed line-through': isDateClosed(day),
-                                            'text-gray-300 cursor-not-allowed hover:bg-transparent': !hasSchedule(day)
+                                            // 1. ไฮไลต์รอบเดินทางที่เลือก (Selected Range)
+                                            'bg-nature-deep text-white shadow-md z-10': isSelected(day),
+                                            'rounded-2xl ring-2 ring-nature-golden': isSelected(day) && isRangeStart(day) && isRangeEnd(day),
+                                            'rounded-l-2xl ring-2 ring-nature-golden': isSelected(day) && isRangeStart(day) && !isRangeEnd(day),
+                                            'rounded-r-2xl ring-2 ring-nature-golden': isSelected(day) && isRangeEnd(day) && !isRangeStart(day),
+                                            'rounded-none': isSelected(day) && !isRangeStart(day) && !isRangeEnd(day),
+
+                                            // 2. วันที่เปิดรับจองแต่ยังไม่ถูกเลือก (Available Range)
+                                            'bg-emerald-50 text-nature-deep hover:bg-emerald-100 font-bold border-y border-emerald-300': isDateAvailable(day) && !isSelected(day),
+                                            'rounded-2xl border': isDateAvailable(day) && !isSelected(day) && isScheduleStart(day) && isScheduleEnd(day),
+                                            'rounded-l-2xl border-l': isDateAvailable(day) && !isSelected(day) && isScheduleStart(day) && !isScheduleEnd(day),
+                                            'rounded-r-2xl border-r': isDateAvailable(day) && !isSelected(day) && isScheduleEnd(day) && !isScheduleStart(day),
+
+                                            // 3. วันที่เต็ม / ปิด / ไม่มีรอบ
+                                            'bg-amber-50 text-amber-800 opacity-60 cursor-not-allowed border border-amber-200 rounded-2xl': isDateFull(day),
+                                            'bg-red-50 text-red-500 opacity-40 cursor-not-allowed line-through rounded-2xl': isDateClosed(day),
+                                            'text-gray-300 cursor-not-allowed hover:bg-transparent rounded-2xl': !hasSchedule(day)
                                         }">
                                     <span x-text="day"></span>
                                     
-                                    <template x-if="isDateAvailable(day) && !isSelected(day)">
+                                    <template x-if="isScheduleStart(day) && !isSelected(day) && isDateAvailable(day)">
                                         <span class="text-[8px] text-emerald-700 leading-none font-bold" x-text="'ว่าง ' + getSchedule(day).available_seats"></span>
                                     </template>
-                                    <template x-if="isDateFull(day)">
+                                    <template x-if="isScheduleStart(day) && isDateFull(day)">
                                         <span class="text-[8px] text-amber-700 leading-none font-bold">เต็ม</span>
                                     </template>
-                                    <template x-if="isDateClosed(day)">
+                                    <template x-if="isScheduleStart(day) && isDateClosed(day)">
                                         <span class="text-[8px] text-red-600 leading-none">ปิดรับ</span>
                                     </template>
                                 </button>
@@ -308,7 +351,7 @@
                     </button>
                 </form>
 
-                <!-- ================= Pop-up Modal แจ้งเตือนเข้าสู่ระบบ ================= -->
+                <!-- Pop-up Modal แจ้งเตือนเข้าสู่ระบบ -->
                 <div x-show="loginModalOpen" 
                      x-cloak 
                      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in"
@@ -317,12 +360,10 @@
                     <div @click.outside="loginModalOpen = false" 
                          class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-100 text-center space-y-5">
                         
-                        <!-- ไอคอนล็อกอิน -->
                         <div class="w-16 h-16 bg-nature-deep/10 text-3xl rounded-2xl flex items-center justify-center mx-auto text-nature-deep">
                             🔐
                         </div>
 
-                        <!-- ข้อความหัวข้อ -->
                         <div>
                             <h3 class="text-xl font-bold text-gray-900">กรุณาเข้าสู่ระบบก่อนจองทริป</h3>
                             <p class="text-xs text-gray-500 mt-2 leading-relaxed">
@@ -330,21 +371,17 @@
                             </p>
                         </div>
 
-                        <!-- ปุ่มทางเลือก -->
                         <div class="space-y-2.5 pt-2">
-                            <!-- ปุ่มไปหน้า Login พร้อม Redirect URL กลับมาหน้านี้ทันที -->
                             <a href="{{ route('login') }}?redirect={{ urlencode(request()->fullUrl()) }}" 
                                class="w-full py-3.5 bg-nature-deep hover:bg-nature-forest text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5">
                                 <span>🔑</span> เข้าสู่ระบบ (Login)
                             </a>
 
-                            <!-- ปุ่มสมัครสมาชิก -->
                             <a href="{{ route('register') }}" 
                                class="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
                                 <span>✨</span> สมัครสมาชิกใหม่ (Register)
                             </a>
 
-                            <!-- ปุ่มปิดหน้าต่าง -->
                             <button type="button" 
                                     @click="loginModalOpen = false" 
                                     class="w-full py-2.5 text-xs text-gray-400 hover:text-gray-600 font-medium transition">
@@ -358,14 +395,87 @@
     </div>
 </section>
 
-<!-- Alpine.js Calendar Controller Logic -->
+<!-- Alpine.js Controllers -->
 <script>
+// 1. ระบบพยากรณ์อากาศแบบเรียลไทม์ (Live Weather Widget)
+function weatherWidget(provinceName) {
+    return {
+        loading: true,
+        tempMin: 21,
+        tempMax: 29,
+        currentTemp: 26,
+        rainProb: 15,
+        windSpeed: 8,
+        weatherText: 'สภาพอากาศสดชื่น',
+        badgeText: 'เส้นทางเปิดปกติ',
+        badgeClass: 'bg-emerald-100 text-emerald-800',
+        province: provinceName ? provinceName.trim() : 'สุราษฎร์ธานี',
+
+        async init() {
+            try {
+                // ค้นหาพิกัด ละติจูด/ลองจิจูด จากชื่อจังหวัด
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(this.province)}&count=1&language=th&format=json`);
+                const geoData = await geoRes.json();
+
+                let lat = 9.14, lon = 99.33; // พิกัดสำรอง
+                if (geoData && geoData.results && geoData.results.length > 0) {
+                    lat = geoData.results[0].latitude;
+                    lon = geoData.results[0].longitude;
+                }
+
+                // ดึงข้อมูลสภาพอากาศปัจจุบันและการพยากรณ์จาก Open-Meteo
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&current=temperature_2m,wind_speed_10m,weather_code&timezone=Asia%2FBangkok`);
+                const wData = await weatherRes.json();
+
+                if (wData && wData.daily) {
+                    this.tempMin = Math.round(wData.daily.temperature_2m_min[0]);
+                    this.tempMax = Math.round(wData.daily.temperature_2m_max[0]);
+                    this.rainProb = wData.daily.precipitation_probability_max[0] ?? 0;
+                }
+
+                if (wData && wData.current) {
+                    this.currentTemp = Math.round(wData.current.temperature_2m);
+                    this.windSpeed = Math.round(wData.current.wind_speed_10m ?? 8);
+
+                    // ตรวจสอบสภาพอากาศตาม WMO Code
+                    const code = wData.current.weather_code;
+                    if (code <= 1) {
+                        this.weatherText = 'ท้องฟ้าแจ่มใส ทัศนวิสัยดีเยี่ยม';
+                    } else if (code <= 3) {
+                        this.weatherText = 'มีเมฆบางส่วน ลมเย็นสบาย';
+                    } else if (code >= 51 && code <= 67) {
+                        this.weatherText = 'มีฝนตกปรอยๆ เล็กน้อย';
+                    } else if (code >= 80) {
+                        this.weatherText = 'มีโอกาสเกิดฝนตกหนัก';
+                    } else {
+                        this.weatherText = 'มีหมอกบาง ทัศนวิสัยปานกลาง';
+                    }
+
+                    // ปรับป้ายสถานะตามโอกาสเกิดฝน
+                    if (this.rainProb >= 60) {
+                        this.badgeText = '⚠️ ระวังทางลื่นจากฝน';
+                        this.badgeClass = 'bg-amber-100 text-amber-800';
+                    } else {
+                        this.badgeText = '✅ สภาพอากาศเหมาะแก่การเดินป่า';
+                        this.badgeClass = 'bg-emerald-100 text-emerald-800';
+                    }
+                }
+            } catch (err) {
+                console.warn('Weather fetch fallback triggered:', err);
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+
+// 2. ระบบปฏิทินเลือกช่วงวันเดินทาง (Interactive Range Calendar)
 function bookingCalendar(config) {
     return {
         basePrice: config.basePrice,
         schedules: config.schedules,
-        isLoggedIn: config.isLoggedIn, // สถานะการล็อกอินของผู้ใช้
-        loginModalOpen: false,        // ควบคุมการแสดงผล Pop-up
+        isLoggedIn: config.isLoggedIn,
+        loginModalOpen: false,
         currentYear: 2026,
         currentMonth: 8, // เริ่มต้นที่กันยายน (0-indexed: 8 = กันยายน)
         monthNames: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
@@ -374,11 +484,9 @@ function bookingCalendar(config) {
 
         init() {
             if (this.schedules.length > 0) {
-                // ตั้งเดือนเริ่มต้นตามรอบแรกที่มีในระบบ
                 this.currentYear = this.schedules[0].start_year;
                 this.currentMonth = this.schedules[0].start_month;
 
-                // เลือกรอบที่เปิดให้จองรอบแรกเป็นค่าตั้งต้น
                 const firstOpen = this.schedules.find(s => s.status === 'open' && s.available_seats > 0);
                 if (firstOpen) {
                     this.selectedSchedule = firstOpen;
@@ -386,15 +494,14 @@ function bookingCalendar(config) {
             }
         },
 
-        // ตรวจสอบการเข้าสู่ระบบก่อนส่งฟอร์ม
         submitBooking() {
             if (!this.isLoggedIn) {
-                this.loginModalOpen = true; // ยังไม่ล็อกอิน -> แสดง Pop-up
+                this.loginModalOpen = true;
                 return;
             }
 
             if (this.selectedSchedule && this.selectedSchedule.available_seats > 0) {
-                this.$refs.bookingForm.submit(); // ล็อกอินแล้ว -> ทำการจองต่อ
+                this.$refs.bookingForm.submit();
             }
         },
 
@@ -414,12 +521,15 @@ function bookingCalendar(config) {
             return new Date(this.currentYear, this.currentMonth, 1).getDay();
         },
 
+        getDateString(day) {
+            const m = String(this.currentMonth + 1).padStart(2, '0');
+            const d = String(day).padStart(2, '0');
+            return `${this.currentYear}-${m}-${d}`;
+        },
+
         getSchedule(day) {
-            return this.schedules.find(s => 
-                s.start_year === this.currentYear && 
-                s.start_month === this.currentMonth && 
-                s.start_day === day
-            );
+            const dateStr = this.getDateString(day);
+            return this.schedules.find(s => dateStr >= s.start_date && dateStr <= s.end_date);
         },
 
         hasSchedule(day) {
@@ -447,9 +557,28 @@ function bookingCalendar(config) {
 
         isSelected(day) {
             if (!this.selectedSchedule) return false;
-            return this.selectedSchedule.start_year === this.currentYear &&
-                   this.selectedSchedule.start_month === this.currentMonth &&
-                   this.selectedSchedule.start_day === day;
+            const dateStr = this.getDateString(day);
+            return dateStr >= this.selectedSchedule.start_date && dateStr <= this.selectedSchedule.end_date;
+        },
+
+        isRangeStart(day) {
+            if (!this.selectedSchedule) return false;
+            return this.getDateString(day) === this.selectedSchedule.start_date;
+        },
+
+        isRangeEnd(day) {
+            if (!this.selectedSchedule) return false;
+            return this.getDateString(day) === this.selectedSchedule.end_date;
+        },
+
+        isScheduleStart(day) {
+            const s = this.getSchedule(day);
+            return s && this.getDateString(day) === s.start_date;
+        },
+
+        isScheduleEnd(day) {
+            const s = this.getSchedule(day);
+            return s && this.getDateString(day) === s.end_date;
         },
 
         selectDate(day) {
@@ -491,7 +620,7 @@ function bookingCalendar(config) {
                 this.currentMonth++;
             }
         }
-    }
+    };
 }
 </script>
 @endsection

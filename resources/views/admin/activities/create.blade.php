@@ -35,6 +35,7 @@
             </h3>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- ชื่อทริป -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">ชื่อทริป *</label>
                     <input type="text" name="name" required value="{{ old('name') }}" placeholder="เช่น เดินป่าพิชิตยอดเขาหลวงสุโขทัย ชมทะเลหมอก 360 องศา" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
@@ -58,6 +59,7 @@
                     @enderror
                 </div>
 
+                <!-- ระดับความยาก -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">⛰️ ระดับความยาก *</label>
                     <select name="difficulty_level" required class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
@@ -71,34 +73,85 @@
                     @enderror
                 </div>
 
+                <!-- อุทยาน / สถานที่จัด -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">📍 อุทยาน / สถานที่จัด *</label>
                     <input type="text" name="location" required value="{{ old('location') }}" placeholder="เช่น อุทยานแห่งชาติรามคำแหง" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('location')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- จังหวัด -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">📍 จังหวัด *</label>
                     <input type="text" name="province" required value="{{ old('province') }}" placeholder="เช่น สุโขทัย, สุราษฎร์ธานี, เชียงใหม่" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('province')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- ระยะเวลา -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">⏳ ระยะเวลา *</label>
                     <input type="text" name="duration_text" required value="{{ old('duration_text') }}" placeholder="เช่น 2 วัน 1 คืน หรือ 3 วัน 2 คืน" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('duration_text')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- ราคาเริ่มต้น -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">💰 ราคาเริ่มต้น (บาท/ท่าน) *</label>
                     <input type="number" step="0.01" name="base_price" required value="{{ old('base_price') }}" placeholder="2190" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm font-mono font-bold focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('base_price')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- 🥾 ระยะทางเดินเท้า (กม.) -->
+                <div>
+                    <label class="block font-bold text-gray-700 uppercase mb-1">🥾 ระยะทางเดินเท้า (กิโลเมตร)</label>
+                    <input type="number" step="0.1" name="distance_km" value="{{ old('distance_km') }}" placeholder="เช่น 8.5" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('distance_km')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- ⛰️ ระดับความสูง (เมตร) -->
+                <div>
+                    <label class="block font-bold text-gray-700 uppercase mb-1">⛰️ ระดับความสูง (ม. จากระดับน้ำทะเล)</label>
+                    <input type="number" name="altitude_meters" value="{{ old('altitude_meters') }}" placeholder="เช่น 1200" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('altitude_meters')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- 🗓️ ช่วงเวลาที่เหมาะสม -->
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-gray-700 uppercase mb-1">🗓️ ช่วงเวลาที่เหมาะสม</label>
+                    <input type="text" name="suitable_season" value="{{ old('suitable_season', 'ตลอดทั้งปี') }}" placeholder="เช่น ตุลาคม - กุมภาพันธ์ หรือ ตลอดทั้งปี" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('suitable_season')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- ลิงก์รูปภาพหน้าปก -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">🖼️ ลิงก์รูปภาพหน้าปก (URL)</label>
                     <input type="url" name="cover_image" value="{{ old('cover_image') }}" placeholder="https://images.unsplash.com/photo-..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('cover_image')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- รายละเอียดกิจกรรม -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">📝 รายละเอียดกิจกรรม *</label>
                     <textarea name="description" rows="3" required placeholder="บรรยายเส้นทาง จุดเด่น สิ่งที่น่าสนใจในกิจกรรมนี้..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none leading-relaxed">{{ old('description') }}</textarea>
+                    @error('description')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
         </div>

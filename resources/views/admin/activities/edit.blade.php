@@ -65,12 +65,21 @@
 
         <!-- 1. ข้อมูลทั่วไปของทริป -->
         <div class="border-b border-gray-100 pb-6">
+            <h3 class="text-base font-bold text-nature-dark mb-4 flex items-center gap-2">
+                <span>🌲</span> ข้อมูลทั่วไปและสเปกเส้นทาง
+            </h3>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- ชื่อทริป -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">ชื่อทริป *</label>
                     <input type="text" name="name" required value="{{ old('name', $activity->name) }}" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('name')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- 🏷️ ประเภททริป / หมวดหมู่ -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">🏷️ ประเภททริป / หมวดหมู่ *</label>
                     <select name="category" required class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
@@ -80,8 +89,12 @@
                         <option value="waterfall" {{ old('category', $activity->category) === 'waterfall' ? 'selected' : '' }}>🌊 ลุยน้ำตก / ล่องแก่ง (Rafting & Waterfall)</option>
                         <option value="nature_study" {{ old('category', $activity->category) === 'nature_study' ? 'selected' : '' }}>🌿 ศึกษาธรรมชาติและถ่ายภาพ (Nature & Photo Walk)</option>
                     </select>
+                    @error('category')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- ระดับความยาก -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">⛰️ ระดับความยาก *</label>
                     <select name="difficulty_level" required class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
@@ -90,44 +103,99 @@
                         <option value="hard" {{ old('difficulty_level', $activity->difficulty_level) === 'hard' ? 'selected' : '' }}>ระดับยาก (Hard)</option>
                         <option value="extreme" {{ old('difficulty_level', $activity->difficulty_level) === 'extreme' ? 'selected' : '' }}>ระดับท้าทายพิเศษ (Extreme)</option>
                     </select>
+                    @error('difficulty_level')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- สถานที่ / จุดหมาย -->
                 <div>
-                    <label class="block font-bold text-gray-700 uppercase mb-1">📍 สถานที่ / จุดหมาย *</label>
+                    <label class="block font-bold text-gray-700 uppercase mb-1">📍 อุทยาน / สถานที่จัด *</label>
                     <input type="text" name="location" required value="{{ old('location', $activity->location) }}" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('location')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- จังหวัด -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">📍 จังหวัด *</label>
                     <input type="text" name="province" required value="{{ old('province', $activity->province) }}" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('province')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- ระยะเวลาเดินทาง -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">⏳ ระยะเวลา *</label>
                     <input type="text" name="duration_text" required value="{{ old('duration_text', $activity->duration_text) }}" placeholder="เช่น 2 วัน 1 คืน" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('duration_text')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- ราคาเริ่มต้น -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">💰 ราคาเริ่มต้น (บาท/ท่าน) *</label>
                     <input type="number" step="0.01" name="base_price" required value="{{ old('base_price', $activity->base_price) }}" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm font-mono font-bold focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('base_price')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- 🥾 ระยะทางเดินเท้า (กม.) -->
+                <div>
+                    <label class="block font-bold text-gray-700 uppercase mb-1">🥾 ระยะทางเดินเท้า (กิโลเมตร)</label>
+                    <input type="number" step="0.1" name="distance_km" value="{{ old('distance_km', $activity->distance_km) }}" placeholder="เช่น 8.5" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('distance_km')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- ⛰️ ระดับความสูง (เมตร) -->
+                <div>
+                    <label class="block font-bold text-gray-700 uppercase mb-1">⛰️ ระดับความสูง (ม. จากระดับน้ำทะเล)</label>
+                    <input type="number" name="altitude_meters" value="{{ old('altitude_meters', $activity->altitude_meters) }}" placeholder="เช่น 1200" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('altitude_meters')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- 🗓️ ช่วงเวลาที่เหมาะสม -->
+                <div class="sm:col-span-2">
+                    <label class="block font-bold text-gray-700 uppercase mb-1">🗓️ ช่วงเวลาที่เหมาะสม</label>
+                    <input type="text" name="suitable_season" value="{{ old('suitable_season', $activity->suitable_season ?? 'ตลอดทั้งปี') }}" placeholder="เช่น ตุลาคม - กุมภาพันธ์ หรือ ตลอดทั้งปี" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                    @error('suitable_season')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- ลิงก์ภาพปก -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">🖼️ ลิงก์รูปภาพหน้าปก (URL)</label>
                     <input type="url" name="cover_image" value="{{ old('cover_image', $activity->cover_image) }}" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
                     @if($activity->cover_image)
                         <div class="mt-2 flex items-center gap-3">
-                            <img src="{{ $activity->cover_image }}" alt="Cover" class="w-24 h-14 rounded-xl object-cover border border-gray-200">
+                            <img src="{{ $activity->cover_image }}" alt="Cover" class="w-24 h-14 rounded-xl object-cover border border-gray-200 shadow-sm">
                             <span class="text-gray-400 text-xs">ตัวอย่างภาพหน้าปกปัจจุบัน</span>
                         </div>
                     @endif
+                    @error('cover_image')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- รายละเอียดทริป -->
                 <div class="sm:col-span-2">
                     <label class="block font-bold text-gray-700 uppercase mb-1">📝 รายละเอียดกิจกรรม *</label>
                     <textarea name="description" rows="4" required class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none leading-relaxed">{{ old('description', $activity->description) }}</textarea>
+                    @error('description')
+                        <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span>
+                    @enderror
                 </div>
 
+                <!-- สถานะเปิดแสดงผล -->
                 <div class="sm:col-span-2">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $activity->is_active) ? 'checked' : '' }} class="w-4 h-4 text-nature-forest rounded border-gray-300 focus:ring-nature-forest">
@@ -197,11 +265,13 @@
                                 <input type="hidden" :name="'schedules[' + index + '][end_date]'" :value="sched.end_date">
                             </div>
 
+                            <!-- ที่นั่ง -->
                             <div>
                                 <label class="block text-gray-600 font-semibold mb-1">จำนวนที่นั่งเปิดรับ *</label>
                                 <input type="number" min="1" :name="'schedules[' + index + '][total_seats]'" required x-model="sched.total_seats" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs font-mono font-bold focus:ring-2 focus:ring-nature-forest focus:outline-none">
                             </div>
 
+                            <!-- ราคาเฉพาะรอบ -->
                             <div>
                                 <label class="block text-gray-600 font-semibold mb-1">ราคาเฉพาะรอบนี้ (บาท)</label>
                                 <input type="number" step="0.01" :name="'schedules[' + index + '][price]'" x-model="sched.price" placeholder="ใช้ราคาตั้งต้น" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-nature-forest focus:outline-none">
