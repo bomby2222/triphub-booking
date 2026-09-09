@@ -4,6 +4,12 @@
 @section('page_title', '➕ เพิ่มทริปเส้นทางใหม่ & กำหนดรอบเดินทาง')
 
 @section('admin_content')
+<!-- Flatpickr Assets (Green Theme เข้ากับ TripHub) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
+
 <div class="max-w-4xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100" 
      x-data="{
         schedules: [
@@ -37,7 +43,7 @@
                     @enderror
                 </div>
 
-                <!-- 🏷️ ประเภททริป / หมวดหมู่ (เพิ่มใหม่) -->
+                <!-- 🏷️ ประเภททริป / หมวดหมู่ -->
                 <div>
                     <label class="block font-bold text-gray-700 uppercase mb-1">🏷️ ประเภททริป / หมวดหมู่ *</label>
                     <select name="category" required class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-sm focus:ring-2 focus:ring-nature-forest focus:outline-none">
@@ -97,14 +103,14 @@
             </div>
         </div>
 
-        <!-- 2. กำหนดรอบวันเดินทาง (แสดงผลบนปฏิทินหน้าเว็บทันที) -->
+        <!-- 2. กำหนดรอบวันเดินทาง (ปฏิทินเลือกช่วงวันเริ่ม - วันสิ้นสุด) -->
         <div class="space-y-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-base font-bold text-nature-dark flex items-center gap-2">
-                        <span>🗓️</span> กำหนดรอบวันเดินทางที่เปิดให้จอง (เชื่อมปฏิทินหน้าเว็บ)
+                        <span>🗓️</span> กำหนดรอบวันเดินทางที่เปิดให้จอง (เลือกจากปฏิทิน)
                     </h3>
-                    <p class="text-xs text-gray-400 mt-0.5">วันที่ระบุตรงนี้จะไปแสดงเป็นจุดสีเขียว (ว่าง) บนปฏิทินหน้าเว็บของลูกค้าทันที</p>
+                    <p class="text-xs text-gray-400 mt-0.5">คลิกเลือกวันไปและวันกลับจากปฏิทิน ระบบจะนำไปแสดงเป็นรอบว่างบนหน้าเว็บอัตโนมัติ</p>
                 </div>
                 <button type="button" @click="addSchedule()" class="px-3.5 py-2 bg-nature-cream hover:bg-nature-golden/30 text-nature-deep font-bold rounded-xl border border-nature-golden/40 transition flex items-center gap-1.5">
                     <span>➕</span> เพิ่มอีกรอบเดินทาง
@@ -122,21 +128,47 @@
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                            <div>
-                                <label class="block text-gray-600 font-semibold mb-1">วันเริ่มเดินทาง *</label>
-                                <input type="date" :name="'schedules[' + index + '][start_date]'" required x-model="sched.start_date" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-nature-forest focus:outline-none">
+                            <!-- ปฏิทินเลือกช่วงวัน (Range Mode) -->
+                            <div class="sm:col-span-2" x-init="
+                                $nextTick(() => {
+                                    flatpickr($el.querySelector('.range-picker'), {
+                                        mode: 'range',
+                                        dateFormat: 'Y-m-d',
+                                        altInput: true,
+                                        altFormat: 'j M Y',
+                                        minDate: 'today',
+                                        locale: 'th',
+                                        showMonths: 2,
+                                        onChange: function(selectedDates, dateStr, instance) {
+                                            if (selectedDates.length === 2) {
+                                                sched.start_date = instance.formatDate(selectedDates[0], 'Y-m-d');
+                                                sched.end_date = instance.formatDate(selectedDates[1], 'Y-m-d');
+                                            } else if (selectedDates.length === 1) {
+                                                sched.start_date = instance.formatDate(selectedDates[0], 'Y-m-d');
+                                                sched.end_date = instance.formatDate(selectedDates[0], 'Y-m-d');
+                                            } else {
+                                                sched.start_date = '';
+                                                sched.end_date = '';
+                                            }
+                                        }
+                                    });
+                                });
+                            ">
+                                <label class="block text-gray-600 font-semibold mb-1">📅 เลือกช่วงวันเดินทาง (เริ่ม - สิ้นสุด) *</label>
+                                <input type="text" class="range-picker w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-nature-forest focus:outline-none cursor-pointer" placeholder="คลิกเพื่อเลือกวันไป - วันกลับ..." readonly required>
+                                
+                                <!-- Hidden inputs เพื่อส่งค่าเข้าฐานข้อมูลตามเดิม -->
+                                <input type="hidden" :name="'schedules[' + index + '][start_date]'" :value="sched.start_date">
+                                <input type="hidden" :name="'schedules[' + index + '][end_date]'" :value="sched.end_date">
                             </div>
 
-                            <div>
-                                <label class="block text-gray-600 font-semibold mb-1">วันสิ้นสุดเดินทาง *</label>
-                                <input type="date" :name="'schedules[' + index + '][end_date]'" required x-model="sched.end_date" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-nature-forest focus:outline-none">
-                            </div>
-
+                            <!-- จำนวนที่นั่งเปิดรับ -->
                             <div>
                                 <label class="block text-gray-600 font-semibold mb-1">จำนวนที่นั่งเปิดรับ *</label>
                                 <input type="number" min="1" :name="'schedules[' + index + '][total_seats]'" required x-model="sched.total_seats" placeholder="20" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs font-mono font-bold focus:ring-2 focus:ring-nature-forest focus:outline-none">
                             </div>
 
+                            <!-- ราคาเฉพาะรอบนี้ -->
                             <div>
                                 <label class="block text-gray-600 font-semibold mb-1">ราคาเฉพาะรอบนี้ (บาท)</label>
                                 <input type="number" step="0.01" :name="'schedules[' + index + '][price]'" x-model="sched.price" placeholder="ใช้ราคาตั้งต้น" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-nature-forest focus:outline-none">

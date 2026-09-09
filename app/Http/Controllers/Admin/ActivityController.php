@@ -43,7 +43,7 @@ class ActivityController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $request) {
-            // 1. บันทึกข้อมูลทริป (รวม category)
+            // 1. บันทึกข้อมูลทริป
             $activity = Activity::create([
                 'name' => $validated['name'],
                 'category' => $validated['category'],
@@ -58,7 +58,7 @@ class ActivityController extends Controller
                 'is_active' => true,
             ]);
 
-            // 2. บันทึกรอบเดินทางลงตาราง activity_schedules ทันที
+            // 2. บันทึกรอบเดินทางลงตาราง activity_schedules
             if ($request->has('schedules')) {
                 foreach ($request->input('schedules') as $sched) {
                     if (!empty($sched['start_date']) && !empty($sched['end_date'])) {
@@ -81,16 +81,116 @@ class ActivityController extends Controller
     }
 
     /**
-     * ลบข้อมูลทริปและรอบเดินทาง (ป้องกัน Foreign Key Constraint Error กรณีมีประวัติการจอง)
+     * แสดงแบบฟอร์มแก้ไขข้อมูลทริป
+     */
+    public function edit($id)
+    {
+        $activity = Activity::with('schedules')->findOrFail($id);
+        return view('admin.activities.edit', compact('activity'));
+    }
+
+    /**
+     * บันทึกการอัปเดตข้อมูลทริปและรอบเดินทาง
+     */
+    public function update(Request $request, $id)
+    {
+        $activity = Activity::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|max:100',
+            'location' => 'required|string|max:255',
+            'province' => 'required|string|max:255',
+            'difficulty_level' => 'required|in:easy,medium,hard,extreme',
+            'duration_text' => 'required|string|max:100',
+            'base_price' => 'required|numeric|min:0',
+            'cover_image' => 'nullable|url',
+            'description' => 'required|string',
+            'is_active' => 'nullable',
+            'schedules' => 'nullable|array',
+            'schedules.*.id' => 'nullable|integer',
+            'schedules.*.start_date' => 'nullable|date',
+            'schedules.*.end_date' => 'nullable|date|after_or_equal:schedules.*.start_date',
+            'schedules.*.total_seats' => 'nullable|integer|min:1',
+            'schedules.*.price' => 'nullable|numeric|min:0',
+        ]);
+
+        DB::transaction(function () use ($activity, $validated, $request) {
+            // 1. อัปเดตข้อมูลทริปหลัก
+            $activity->update([
+                'name' => $validated['name'],
+                'category' => $validated['category'],
+                'location' => $validated['location'],
+                'province' => $validated['province'],
+                'difficulty_level' => $validated['difficulty_level'],
+                'duration_text' => $validated['duration_text'],
+                'base_price' => $validated['base_price'],
+                'cover_image' => $validated['cover_image'] ?? $activity->cover_image,
+                'description' => $validated['description'],
+                'is_active' => $request->has('is_active') ? true : false,
+            ]);
+
+            // 2. ซิงค์รอบเดินทาง (สร้างใหม่ / แก้ไขรอบเดิม / ลบรอบที่ถูกนำออก)
+            if ($request->has('schedules')) {
+                $submittedIds = [];
+
+                foreach ($request->input('schedules') as $sched) {
+                    if (!empty($sched['start_date']) && !empty($sched['end_date'])) {
+                        $totalSeats = (int) ($sched['total_seats'] ?? 20);
+                        $price = !empty($sched['price']) ? (float) $sched['price'] : null;
+
+                        if (!empty($sched['id'])) {
+                            // อัปเดตรอบเดิม
+                            $existingSchedule = ActivitySchedule::where('activity_id', $activity->id)
+                                ->where('id', $sched['id'])
+                                ->first();
+
+                            if ($existingSchedule) {
+                                $existingSchedule->update([
+                                    'start_date' => $sched['start_date'],
+                                    'end_date' => $sched['end_date'],
+                                    'total_seats' => $totalSeats,
+                                    'price_override' => $price,
+                                ]);
+                                $submittedIds[] = $existingSchedule->id;
+                            }
+                        } else {
+                            // เพิ่มรอบใหม่
+                            $newSchedule = ActivitySchedule::create([
+                                'activity_id' => $activity->id,
+                                'start_date' => $sched['start_date'],
+                                'end_date' => $sched['end_date'],
+                                'total_seats' => $totalSeats,
+                                'available_seats' => $totalSeats,
+                                'price_override' => $price,
+                                'status' => 'open',
+                            ]);
+                            $submittedIds[] = $newSchedule->id;
+                        }
+                    }
+                }
+
+                // ลบรอบที่ผู้ใช้กดลบออกในฟอร์ม (ลบเฉพาะรอบที่ยังไม่มีลูกค้าจอง)
+                $deleteQuery = $activity->schedules()->whereNotIn('id', $submittedIds);
+                if (Schema::hasTable('bookings')) {
+                    $deleteQuery->whereDoesntHave('bookings');
+                }
+                $deleteQuery->delete();
+            }
+        });
+
+        return redirect()->route('admin.activities.index')->with('success', 'อัปเดตข้อมูลทริปและรอบเดินทางเรียบร้อยแล้ว!');
+    }
+
+    /**
+     * ลบข้อมูลทริปและรอบเดินทาง
      */
     public function destroy($id)
     {
         $activity = Activity::findOrFail($id);
         
-        // ดึง ID ของรอบเดินทางทั้งหมดในทริปนี้
         $scheduleIds = $activity->schedules()->pluck('id');
 
-        // ตรวจสอบว่ามีข้อมูลการจองของลูกค้าผูกอยู่กับรอบเดินทางเหล่านี้หรือไม่ (ใช้คอลัมน์ activity_schedule_id)
         $hasBookings = false;
         if (Schema::hasTable('bookings') && count($scheduleIds) > 0) {
             $hasBookings = DB::table('bookings')->whereIn('activity_schedule_id', $scheduleIds)->exists();
