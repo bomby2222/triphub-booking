@@ -193,9 +193,9 @@
             <div>
                 <h4 class="text-white font-semibold mb-4 text-base">ติดต่อสอบถาม</h4>
                 <div class="space-y-2 text-sm text-white/70">
-                    <p>📞 โทรศัพท์: 02-999-8888</p>
-                    <p>💬 LINE Official: @deepforest_th</p>
-                    <p>✉️ อีเมล: support@hikingnature.com</p>
+                    <p>📞 โทรศัพท์: 080-053-8514</p>
+                    <p>💬 LINE Official: @TripHub</p>
+                    <p>✉️ อีเมล: support@TripHub.com</p>
                     <p>📍 ประจำการ: ทุกวัน 08:30 - 18:00 น.</p>
                 </div>
             </div>

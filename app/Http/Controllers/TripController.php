@@ -97,4 +97,4 @@ class TripController extends Controller
 
         return view('trips.show', compact('activity'));
     }
-}
+}       
